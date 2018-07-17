@@ -1,3 +1,61 @@
-<p>
-  messages works!
-</p>
+<div class="container mt-5">
+    <div class="row">
+      <div class="btn-group">
+        <button class="btn btn-primary" [(ngModel)]="messageContainer" btnRadio="Unread" (click)="loadMessages()">
+          <i class="fa fa-envelope"></i> Unread
+        </button>
+        <button class="btn btn-primary" [(ngModel)]="messageContainer" btnRadio="Inbox" (click)="loadMessages()">
+          <i class="fa fa-envelope-open"></i> Inbox
+        </button>
+        <button class="btn btn-primary" [(ngModel)]="messageContainer" btnRadio="Outbox" (click)="loadMessages()">
+          <i class="fa fa-paper-plane"></i> Outbox
+        </button>
+      </div>
+    </div>
+
+    <div class="row" *ngIf="messages.length == 0">
+      <h3>No messages</h3>
+    </div>
+
+    <div class="row" *ngIf="messages.length > 0">
+      <table class="table table-hover" style="cursor: pointer">
+        <tr>
+          <th style="width: 40%">Message</th>
+          <th style="width: 20%">From / To</th>
+          <th style="width: 20%">Sent / Received</th>
+          <th style="width: 20%"></th>
+        </tr>
+        <tr *ngFor="let message of messages" [routerLink]="['/members',
+          messageContainer == 'Outbox' ? message.recipientId : message.senderId]"
+            [queryParams]="{tab: 3}">
+          <td>{{message.content}}</td>
+          <td>
+            <div *ngIf="messageContainer != 'Outbox'">
+                  <img src={{message?.senderPhotoUrl}} class="img-circle rounded-circle mr-1">
+                  <strong>{{message.senderKnownAs}}</strong>
+            </div>
+            <div *ngIf="messageContainer == 'Outbox'">
+                  <img src={{message?.recipientPhotoUrl}} class="img-circle rounded-circle mr-1">
+                  <strong>{{message.recipientKnownAs}}</strong>
+            </div>
+          </td>
+          <td>{{message.messageSent | timeAgo}}</td>
+          <td>
+            <button class="btn btn-danger" (click)="$event.stopPropagation()" (click)="deleteMessage(message.id)">Delete</button>
+          </td>
+        </tr>
+      </table>
+
+    </div>
+
+  </div>
+
+  <div class="d-flex justify-content-center">
+      <pagination [boundaryLinks]="true"
+                  [totalItems]="pagination.totalItems"
+                  [itemsPerPage]="pagination.itemsPerPage"
+                  [(ngModel)]="pagination.currentPage"
+                  (pageChanged)="pageChanged($event)"
+                previousText="&lsaquo;" nextText="&rsaquo;" firstText="&laquo;" lastText="&raquo;">
+    </pagination>
+    </div>
