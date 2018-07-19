@@ -14,7 +14,7 @@ import { ListsResolver } from './_resolvers/lists.resolver';
 import { MessagesResolver } from './_resolvers/messages.resolver';
 
 export const appRoutes: Routes = [
-    {path: 'home', component: HomeComponent},
+    {path: '', component: HomeComponent},
     {
         path: '',
         runGuardsAndResolvers: 'always',
@@ -30,5 +30,5 @@ export const appRoutes: Routes = [
             {path: 'lists', component: ListsComponent, resolve: {users: ListsResolver}},
         ]
     },
-    {path: '**', redirectTo: 'home', pathMatch: 'full'},
+    {path: '**', redirectTo: '', pathMatch: 'full'},
 ];
