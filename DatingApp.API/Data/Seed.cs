@@ -1,46 +1,61 @@
 using System.Collections.Generic;
 using System.Linq;
 using DatingApp.API.Models;
+using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 
 namespace DatingApp.API.Data
 {
     public class Seed
     {
-        private readonly DataContext _context;
-        public Seed(DataContext context)
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<Role> _roleManager;
+        public Seed(UserManager<User> userManager, RoleManager<Role> roleManager)
         {
-            _context = context;
+            _roleManager = roleManager;
+            _userManager = userManager;
         }
 
-        public void SeedUsers()
+        public async void SeedUsers()
         {
-            if (!_context.Users.Any())
+            if (!_userManager.Users.Any())
             {
                 var userData = System.IO.File.ReadAllText("Data/UserSeedData.json");
                 var users = JsonConvert.DeserializeObject<List<User>>(userData);
-                foreach (var user in users)
+
+                // create some roles
+                var roles = new List<Role>
                 {
-                    byte[] passwordHash, passwordSalt;
-                    CreatePasswordHash("password", out passwordHash, out passwordSalt);
+                    new Role{Name = "Member"},
+                    new Role{Name = "Admin"},
+                    new Role{Name = "Moderator"},
+                    new Role{Name = "VIP"},
+                };
 
-                    user.PasswordHash = passwordHash;
-                    user.PasswordSalt = passwordSalt;
-                    user.Username = user.Username.ToLower();
-
-                    _context.Users.Add(user);
+                foreach (var role in roles)
+                {   
+                    await _roleManager.CreateAsync(role);
                 }
 
-                _context.SaveChanges();
-            }
-        }
+                foreach (var user in users)
+                {
+                    await _userManager.CreateAsync(user, "password");
+                    await _userManager.AddToRoleAsync(user, "Member");
+                }
 
-        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
-        {
-            using (var hmac = new System.Security.Cryptography.HMACSHA512())
-            {
-                passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                // create admin user
+                var adminUser = new User
+                {
+                    UserName = "Admin"
+                };
+
+                var result = await _userManager.CreateAsync(adminUser, "password");
+
+                if (result.Succeeded)
+                {
+                    var admin = await _userManager.FindByNameAsync("Admin");
+                    await _userManager.AddToRolesAsync(admin, new[] {"Admin", "Moderator"});
+                }
             }
         }
     }
